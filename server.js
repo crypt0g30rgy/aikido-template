@@ -1,11 +1,18 @@
 require("dotenv").config({ path: "./.env" });
 require("@aikidosec/firewall");
 
-const express = require('express')
-const app = express()
-const PORT = process.env.PORT || 3000;
-const swaggerJsdoc = require("swagger-jsdoc")
+const express = require('express');
+const os = require('os');
+const app = express();
+const PORT = process.env.PORT || 4000;
+const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+
+// Ensure the environment variables are defined
+if (!process.env.API_USER || !process.env.API_PASS) {
+  console.error('Error: API_USER or API_PASS environment variables are not set.');
+  process.exit(1); // Exit the process with an error
+}
 
 app.use(express.json())
 
@@ -30,5 +37,16 @@ app.use((req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`API running on port http://localhost:${PORT}`)
-})
+  const interfaces = os.networkInterfaces();
+  console.log(`API running on the following interfaces:`);
+
+  Object.keys(interfaces).forEach((interfaceName) => {
+      interfaces[interfaceName].forEach((iface) => {
+          if (iface.family === 'IPv4' && !iface.internal) {
+              console.log(`- http://${iface.address}:${PORT}`);
+          }
+      });
+  });
+
+  console.log(`Also available at http://localhost:${PORT}`);
+});
